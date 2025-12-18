@@ -182,51 +182,47 @@ dev.off()
 ## ─────  6 • Turning angle — stats & rose plot pour la fourmi id 243 ─────
 library(circular)
 
-## 1) Angles de la trajectoire la plus longue (déjà en radians)
-ang <- na.omit(df_long$angle)
+# ---- 0) garder seulement l'ID 243 (important) ----
+d243 <- df_long %>% filter(ID == 243, !is.na(angle))
 
-## 2) Objet circulaire : turning angles dans (-π, π]
-y <- as.circular(
-  ang,
+## --- 1) convertir ton angle en objet circulaire ----
+d243$direction <- as.circular(
+  d243$angle,
   units  = "radians",
-  modulo = "pi"   # pour des turning angles (−π, π]
+  modulo = "asis"     # tu veux garder ça
 )
 
+## --- 2) objet utilisé pour les graphiques ----
+y   <- d243$direction
+sum <- summary(y)
+sum
 
-## 3) Statistiques directionnelles
-mu   <- mean.circular(y) |> as.numeric()   # moyenne directionnelle
-Rbar <- rho.circular(y)  |> as.numeric()   # longueur du vecteur résultant
-
-## 4) Figure
-pdf(file.path(figdir, "02_rose_angle_id243.pdf"), width = 5, height = 5)
+pdf(file.path(figdir, "rose_angle_id243.pdf"), width = 5, height = 5)
 par(mar = c(1, 1, 1, 1))
 
-## a) Tiges / points empilés sur le cercle
-plot(
+# ✅ on force seulement l’AFFICHAGE en cercle complet (style Nicosia)
+plot(y,
+     stack    = TRUE,
+     cex      = 0.7,
+     tcl.text = 0.2)   # <-- juste pour l’affichage
+
+circular::rose.diag(
   y,
-  stack    = TRUE,
-  cex      = 0.7,
-  tcl.text = 0.2
+  bins           = 30,
+  col            = "grey",
+  prop           = 1.8,
+  shrink         = 1,
+  add            = TRUE,
+  axes           = FALSE,
+  control.circle = circular::circle.control(lty = 0)
 )
 
-## b) Histogramme circulaire (rose) par-dessus
-rose.diag(
-  y,
-  bins     = 30,
-  col      = "grey",
-  prop     = 1.8,
-  add      = TRUE,
-  cex      = 0.7,
-  tcl.text = 0.2
-)
-
-## c) Flèche de la moyenne directionnelle
 arrows(
   x0 = 0, y0 = 0,
-  x1 = Rbar * cos(mu),
-  y1 = Rbar * sin(mu),
-  col    = "red",
-  lwd    = 2,
+  x1 = sum[["Rho"]] * cos(sum[["Mean"]]),
+  y1 = sum[["Rho"]] * sin(sum[["Mean"]]),
+  col = "red",
+  lwd = 2,
   length = 0.12
 )
 
@@ -273,6 +269,9 @@ ggsave(file.path(figdir, "02_step_vs_turning_angle.pdf"),
 ###############################################################################
 #  FIN CHAPITRE 2
 ###############################################################################
+
+
+
 
 
 
